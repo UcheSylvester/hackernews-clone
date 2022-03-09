@@ -1,3 +1,4 @@
+import axios from "axios";
 import { useEffect, useMemo, useState } from "react";
 import Story from "../../components/story";
 
@@ -8,14 +9,20 @@ const HomePage = () => {
   const [storiesIds, setStoriesIds] = useState([]);
   const [stories, setStories] = useState<any[]>([]);
   const [currentPage, setCurrentPage] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
 
   const getTotalStoriesIds = async () => {
+    setIsLoading(true);
     try {
-      const response = await fetch(`${BASE_URL}/topstories.json`);
-      const data = await response.json();
-      setStoriesIds(data);
+      const response = await axios.get(`${BASE_URL}/topstories.json`);
+      setStoriesIds(response.data);
       setCurrentPage(1);
-    } catch (error) {}
+
+      setIsLoading(false);
+    } catch (error) {
+      console.log("error", error);
+      setIsLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -23,20 +30,22 @@ const HomePage = () => {
   }, []);
 
   const getStoriesByPage = async () => {
+    setIsLoading(true);
     try {
       const end = currentPage * SIZE_PER_PAGE;
       const start = end - SIZE_PER_PAGE;
       const storiesToGet = storiesIds.slice(start, end);
 
       const responses = await Promise.all(
-        storiesToGet.map((id) => fetch(`${BASE_URL}/item/${id}.json`))
+        storiesToGet.map((id) => axios.get(`${BASE_URL}/item/${id}.json`))
       );
-      const stories: any[] = await Promise.all(
-        responses.map((response) => response.json())
-      );
-
+      const stories: any[] = responses.map((response) => response.data);
       setStories(stories);
-    } catch (error) {}
+      setIsLoading(false);
+    } catch (error) {
+      console.log("error", error);
+      setIsLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -49,15 +58,17 @@ const HomePage = () => {
     return Array.from({ length: totalPageCount }, (_, i) => i + 1);
   }, [storiesIds]);
 
-  if (!storiesIds.length) return null;
-
   return (
     <main>
-      {stories.map((story) => (
-        <Story key={story.id} {...story} />
-      ))}
+      <h1>HACKER NEWS</h1>
 
-      <div className="pagination">
+      {isLoading ? (
+        <p>Loading...</p>
+      ) : (
+        stories.map((story) => <Story key={story.title} {...story} />)
+      )}
+
+      <nav className="pagination">
         {paginationRange.map((page) => (
           <button
             className="pagination__button"
@@ -67,7 +78,7 @@ const HomePage = () => {
             {page}
           </button>
         ))}
-      </div>
+      </nav>
     </main>
   );
 };

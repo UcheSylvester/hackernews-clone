@@ -1,12 +1,10 @@
 import "./index.scss";
 
-const Story: React.FC<any> = ({ title }) => {
+const Story: React.FC<any> = ({ title, d }) => {
   return (
-    <div>
+    <article>
       <p className="story__title">{title}</p>
-
-      <div className="story__details"></div>
-    </div>
+    </article>
   );
 };
 
