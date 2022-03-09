@@ -1,9 +1,22 @@
 import "./index.scss";
 
-const Story: React.FC<any> = ({ title, d }) => {
+export interface IStory {
+  id: string;
+  title: string;
+  url: string;
+}
+
+const Story: React.FC<IStory> = ({ title, url }) => {
   return (
-    <article>
-      <p className="story__title">{title}</p>
+    <article className="story">
+      <a
+        target="_blank"
+        rel="noopener noreferrer"
+        href={url}
+        className="story__title"
+      >
+        {title}
+      </a>
     </article>
   );
 };
