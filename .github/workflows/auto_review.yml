@@ -33,15 +33,15 @@ jobs:
           echo "Usernames : $usernames"
           echo "::set-output name=usernames::$usernames"
 
-      - name: Get valid reviewers usernames
-        id: get_valid_reviewers_usernames
+      - name: Get valid usernames
+        id: get_valid_usernames
         run: |
           extracted_reviewers="${{ steps.extract_usernames.outputs.usernames }}"
           creator="${{ steps.get_pull_request_creator_username.outputs.creator }}"
 
           # the creator of the pull request is not a valid reviewer
           invalid_reviewers=("GitHub" "dependabot[bot]" "$creator", "dependabot-preview[bot]")
-          
+
           # Create an empty array to store valid reviewers
           valid_reviewers=()
 
@@ -58,6 +58,7 @@ jobs:
           valid_reviewers_string=$(IFS=','; echo "${valid_reviewers[*]}")
 
           echo "Valid reviewers: $valid_reviewers_string"
+          echo "invalid reviewers: $invalid_reviewers"
 
           # Set the output to be used in the next step
           echo "::set-output name=valid_reviewers::$valid_reviewers_string"
