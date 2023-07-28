@@ -29,10 +29,24 @@ jobs:
 
           creator=${{ steps.get_pull_request_creator_username.outputs.creator }}
           usernames="${usernames//$creator,}"
-          echo "Usernames after : $usernames"
 
-          
+          echo "Usernames after : $usernames"
           echo "::set-output name=usernames::$usernames"
+
+      # - name: Get valid reviewers usernames
+      #   id: get_valid_reviewers_usernames
+      #   run: |
+      #     creator="${{ steps.get_pull_request_creator_username.outputs.creator }}"
+      #     usernames="${{ steps.extract_usernames.outputs.usernames }}"
+      #     valid_reviewers=()
+      #     for username in $usernames; do
+      #       if [[ "$username" != "$creator" ]]; then
+      #         valid_reviewers+=("$username")
+      #       fi
+      #     done
+      #     valid_reviewers=$(echo "${valid_reviewers[@]}" | tr ' ' '\n' | sort -u | tr '\n' ',')
+      #     echo "Valid reviewers: $valid_reviewers"
+      #     echo "::set-output name=valid_reviewers::$valid_reviewers"
 
       - name: Get default reviewers
         id: get_default_reviewers
@@ -53,4 +67,4 @@ jobs:
             -H "Accept: application/vnd.github.v3+json" \
             -H "Authorization: token $GITHUB_TOKEN" \
             https://api.github.com/repos/${GITHUB_REPOSITORY}/pulls/${{ github.event.pull_request.number }}/requested_reviewers \
-            -d '{"reviewers": ["mbilawisdom"]}'
+            -d '{"reviewers": [$reviewers]}'
