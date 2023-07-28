@@ -25,31 +25,76 @@ jobs:
         run: |
           usernames=($(git log --pretty=format:"%cn" ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} | sort -u))
           usernames=$(echo "${usernames[@]}" | tr ' ' '\n' | sort -u | tr '\n' ',')
+
+          # Remove any leading or trailing commas
+          usernames="${usernames#,}"
+          usernames="${usernames%,}"
+
           echo "Usernames : $usernames"
           echo "::set-output name=usernames::$usernames"
 
-      # - name: Get valid reviewers usernames
-      #   id: get_valid_reviewers_usernames
-      #   run: |
-      #     creator="${{ steps.get_pull_request_creator_username.outputs.creator }}"
-      #     invalid_usernames=
-      #     usernames="${{ steps.extract_usernames.outputs.usernames }}"
-      #     valid_reviewers=()
-      #     for username in $usernames; do
-      #       if [[ "$username" != "$creator" ]]; then
-      #         valid_reviewers+=("$username")
-      #       fi
-      #     done
-      #     valid_reviewers=$(echo "${valid_reviewers[@]}" | tr ' ' '\n' | sort -u | tr '\n' ',')
-      #     echo "Valid reviewers: $valid_reviewers"
-      #     echo "::set-output name=valid_reviewers::$valid_reviewers"
+      - name: Get valid reviewers usernames
+        id: get_valid_reviewers_usernames
+        run: |
+          extracted_reviewers="${{ steps.extract_usernames.outputs.usernames }}"
+          creator="${{ steps.get_pull_request_creator_username.outputs.creator }}"
 
+          # the creator of the pull request is not a valid reviewer
+          invalid_reviewers=("GitHub" "dependabot[bot]" "$creator", "dependabot-preview[bot]")
+          
+          # Create an empty array to store valid reviewers
+          valid_reviewers=()
+
+          # Loop through the extracted reviewers and check if they are valid
+          IFS=',' read -ra reviewers_array <<< "$extracted_reviewers"
+          for reviewer in "${reviewers_array[@]}"; do
+            # Check if the reviewer is not in the invalid reviewers array
+            if [[ ! " ${invalid_reviewers[@]} " =~ " $reviewer " ]]; then
+              valid_reviewers+=("$reviewer")
+            fi
+          done
+
+          # Join the valid reviewers array back into a comma-separated string
+          valid_reviewers_string=$(IFS=','; echo "${valid_reviewers[*]}")
+
+          echo "Valid reviewers: $valid_reviewers_string"
+
+          # Set the output to be used in the next step
+          echo "::set-output name=valid_reviewers::$valid_reviewers_string"
 
       - name: Get default reviewers
         id: get_default_reviewers
         env:
           DEFAULT_REVIEWERS: ${{ vars.DEFAULT_REVIEWERS }}
         run: echo "::set-output name=default_reviewers::$DEFAULT_REVIEWERS"
+
+      - name: Get valid default reviewers
+        id: get_valid_default_reviewers
+        # if: steps.get_valid_reviewers_usernames.outputs.valid_reviewers == ''
+        run: |
+          default_reviewers="${{ steps.get_default_reviewers.outputs.default_reviewers }}"
+          echo "Default reviewers: $default_reviewers"
+          invalid_reviewers=("GitHub" "dependabot[bot]" "$creator", "dependabot-preview[bot]")
+
+          # Create an empty array to store valid default reviewers
+          valid_default_reviewers=()
+
+          # Loop through the default reviewers and check if they are valid
+          IFS=',' read -ra default_reviewers_array <<< "$default_reviewers"
+          for default_reviewer in "${default_reviewers_array[@]}"; do
+            # Check if the default reviewer is in the valid reviewers array
+            if [[ " ${invalid_reviewers[@]} " =~ " $default_reviewer " ]]; then
+              valid_default_reviewers+=("$default_reviewer")
+            fi
+          done
+
+          # Join the valid default reviewers array back into a comma-separated string
+          valid_default_reviewers_string=$(IFS=','; echo "${valid_default_reviewers[*]}")
+
+          echo "Valid default reviewers: $valid_default_reviewers_string"
+
+          # Set the output to be used in the next step
+          echo "::set-output name=valid_default_reviewers::$valid_default_reviewers_string"
 
       - name: Request reviews
         env:
