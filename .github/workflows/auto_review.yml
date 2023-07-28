@@ -30,8 +30,14 @@ jobs:
           creator=${{ steps.get_pull_request_creator_username.outputs.creator }}
           usernames="${usernames//$creator,}"
 
+          usernames="${usernames#,}"
+          usernames="${usernames%,}"
+
+          IFS=',' read -r -a usernames_array <<< "$usernames"
+
           echo "Usernames after : $usernames"
-          echo "::set-output name=usernames::$usernames"
+          echo "Usernames array : $usernames_array"
+          echo "::set-output name=usernames::$usernames_array"
 
       # - name: Get valid reviewers usernames
       #   id: get_valid_reviewers_usernames
@@ -60,7 +66,6 @@ jobs:
         run: |
           echo "Requesting reviews..."
           reviewers="${{ steps.extract_usernames.outputs.usernames }}"
-          reviewers="${reviewers%,}"
           default_reviewers="${{ steps.get_default_reviewers.outputs.default_reviewers }}"
           echo "Reviewers: $reviewers"
           echo "Default reviewers: $default_reviewers"
@@ -68,4 +73,4 @@ jobs:
             -H "Accept: application/vnd.github.v3+json" \
             -H "Authorization: token $GITHUB_TOKEN" \
             "https://api.github.com/repos/${GITHUB_REPOSITORY}/pulls/${{ github.event.pull_request.number }}/requested_reviewers" \
-            -d "{\"reviewers\": [${reviewers}]}"
+            -d "{\"reviewers\": $reviewers}"
