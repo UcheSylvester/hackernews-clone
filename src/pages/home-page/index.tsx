@@ -28,6 +28,7 @@ const HomePage = () => {
 
   useEffect(() => {
     getTotalStoriesIds();
+    
   }, []);
 
   const getStoriesByPage = async () => {
