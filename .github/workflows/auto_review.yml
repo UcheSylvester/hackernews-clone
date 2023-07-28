@@ -14,23 +14,27 @@ jobs:
         with:
           fetch-depth: 0
 
-      # - name: Get changed files
-      #   id: file_changes
-      #   run: |
-      #     echo "Getting changed files..."
-      #     echo "Base: ${{ github.event.pull_request.base }}"
-      #     echo "Head: ${{ github.event.pull_request.head }}"
-      #     echo ::set-output name=files::$(git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }})
-
-      - name: Extract usernames
-        id: extract_usernames
+      - name: Get pull request creator username
+        id: get_pull_request_creator_username
         run: |
-          echo "Extracting usernames..."
+          creator=$(jq -r '.pull_request.user.login' ${{ github.event_path }})
+          echo "creator: $creator"
+          echo "::set-output name=creator::$creator"
+
+      - name: Extract usernames from commits
+        id: extract_usernames_from_commits
+        run: |
           usernames=($(git log --pretty=format:"%cn" ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} | sort -u))
-          echo "Usernames: $usernames"
           usernames=$(echo "${usernames[@]}" | tr ' ' '\n' | sort -u | tr '\n' ',')
-          echo "Usernames after: $usernames"
+          echo "Usernames : $usernames"
           echo "::set-output name=usernames::$usernames"
+
+      - name: Get default reviewers
+        id: get_default_reviewers
+        run: |
+          default_reviewers=${{ secret.DEFAULT_REVIEWERS }}
+          echo "Default reviewers: $default_reviewers"
+          echo "::set-output name=default_reviewers::$default_reviewers"
 
       - name: Request reviews
         env:
