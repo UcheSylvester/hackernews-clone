@@ -32,6 +32,7 @@ jobs:
       #   id: get_valid_reviewers_usernames
       #   run: |
       #     creator="${{ steps.get_pull_request_creator_username.outputs.creator }}"
+      #     invalid_usernames=
       #     usernames="${{ steps.extract_usernames.outputs.usernames }}"
       #     valid_reviewers=()
       #     for username in $usernames; do
@@ -63,4 +64,4 @@ jobs:
             -H "Accept: application/vnd.github.v3+json" \
             -H "Authorization: token $GITHUB_TOKEN" \
             https://api.github.com/repos/${GITHUB_REPOSITORY}/pulls/${{ github.event.pull_request.number }}/requested_reviewers \
-            -d '{"reviewers": ["'$reviewer'"]}'
+            -d '{"reviewers": ["'$reviewers'"]}'
