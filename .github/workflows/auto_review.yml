@@ -14,13 +14,12 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Get pull request creator username
-        id: get_pull_request_creator_username
-        run: |
-          creator=$(jq -r '.pull_request.user.login' ${{ github.event_path }})
-          echo "creator: $creator"
-          echo "::set-output name=creator::$creator"
-          
+      # - name: Get pull request creator username
+      #   id: get_pull_request_creator_username
+      #   run: |
+      #     creator=$(jq -r '.pull_request.user.login' ${{ github.event_path }})
+      #     echo "creator: $creator"
+      #     echo "::set-output name=creator::$creator"  
 
       - name: Extract usernames from commits
         id: extract_usernames_from_commits
