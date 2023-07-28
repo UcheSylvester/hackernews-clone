@@ -58,12 +58,13 @@ jobs:
           echo "Requesting reviews..."
           reviewers="${{ steps.extract_usernames.outputs.usernames }}"
           echo "Reviewers: $reviewers"
-          
-          # get the first reviewer
-          first_reviewer=$(echo "$reviewers" | cut -d',' -f1)
+
+          # get the last reviewer
+          first_reviewer=$(echo "$reviewers" | cut -d',' -f3)
           echo "First reviewer: $first_reviewer"
+
           curl -X POST \
             -H "Accept: application/vnd.github.v3+json" \
             -H "Authorization: token $GITHUB_TOKEN" \
             https://api.github.com/repos/${GITHUB_REPOSITORY}/pulls/${{ github.event.pull_request.number }}/requested_reviewers \
-            -d '{"reviewers":["'"$reviewers"'"]}'
+            -d '{"reviewers":["'"$first_reviewer"'"]}'
