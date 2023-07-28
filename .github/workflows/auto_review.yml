@@ -43,6 +43,7 @@ jobs:
       #     valid_reviewers=$(echo "${valid_reviewers[@]}" | tr ' ' '\n' | sort -u | tr '\n' ',')
       #     echo "Valid reviewers: $valid_reviewers"
       #     echo "::set-output name=valid_reviewers::$valid_reviewers"
+      
 
       - name: Get default reviewers
         id: get_default_reviewers
