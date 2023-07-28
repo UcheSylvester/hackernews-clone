@@ -26,6 +26,12 @@ jobs:
           usernames=($(git log --pretty=format:"%cn" ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} | sort -u))
           usernames=$(echo "${usernames[@]}" | tr ' ' '\n' | sort -u | tr '\n' ',')
           echo "Usernames : $usernames"
+
+          creator = ${{ steps.get_pull_request_creator_username.outputs.creator }}
+          usernames="${usernames//$creator,}"
+          echo "Usernames after : $usernames"
+
+          
           echo "::set-output name=usernames::$usernames"
 
       - name: Get default reviewers
