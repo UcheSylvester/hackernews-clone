@@ -10,16 +10,58 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Get pull request creator username
+        id: get_pull_request_creator_username
+        run: |
+          creator=$(jq -r '.pull_request.user.login' ${{ github.event_path }})
+          echo "::set-output name=creator::$creator"  
+
+      - name: Extract usernames from commits
+        id: extract_usernames
+        run: |
+          usernames=($(git log --pretty=format:"%cn" ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} | sort -u))
+          usernames=$(echo "${usernames[@]}" | tr ' ' '\n' | sort -u | tr '\n' ',')
+          echo "Usernames : $usernames"
+          echo "::set-output name=usernames::$usernames"
+
+      # - name: Get valid reviewers usernames
+      #   id: get_valid_reviewers_usernames
+      #   run: |
+      #     creator="${{ steps.get_pull_request_creator_username.outputs.creator }}"
+      #     invalid_usernames=
+      #     usernames="${{ steps.extract_usernames.outputs.usernames }}"
+      #     valid_reviewers=()
+      #     for username in $usernames; do
+      #       if [[ "$username" != "$creator" ]]; then
+      #         valid_reviewers+=("$username")
+      #       fi
+      #     done
+      #     valid_reviewers=$(echo "${valid_reviewers[@]}" | tr ' ' '\n' | sort -u | tr '\n' ',')
+      #     echo "Valid reviewers: $valid_reviewers"
+      #     echo "::set-output name=valid_reviewers::$valid_reviewers"
+
+      - name: Get default reviewers
+        id: get_default_reviewers
+        env:
+          DEFAULT_REVIEWERS: ${{ vars.DEFAULT_REVIEWERS }}
+        run: echo "::set-output name=default_reviewers::$DEFAULT_REVIEWERS"
 
       - name: Request reviews
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          echo "token --> $GITHUB_TOKEN"
-          echo "url --> https://api.github.com/repos/${GITHUB_REPOSITORY}/pulls/${{ github.event.pull_request.number }}/requested_reviewers"
+          echo "Requesting reviews..."
+          reviewers="${{ steps.extract_usernames.outputs.usernames }}"
+          default_reviewers="${{ steps.get_default_reviewers.outputs.default_reviewers }}"
+          reviewer="mbilawisdom"
+          echo "Reviewers: $reviewers"
+          echo "Default reviewers: $default_reviewers"
           curl -X POST \
             -H "Accept: application/vnd.github.v3+json" \
             -H "Authorization: token $GITHUB_TOKEN" \
             https://api.github.com/repos/${GITHUB_REPOSITORY}/pulls/${{ github.event.pull_request.number }}/requested_reviewers \
-            -d '{"reviewers": ["mbilawisdom"]}'
+            -d '{"reviewers": ["'$reviewers'"]}'
