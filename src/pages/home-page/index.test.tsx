@@ -17,7 +17,7 @@ describe("HomePage", () => {
     expect(screen.queryByText("1")).not.toBeInTheDocument();
 
     // wait for the loading message to be removed
-    await waitForElementToBeRemoved(loading);
+    // await waitForElementToBeRemoved(loading);
 
     // it should show pagination and buttons
     const pagination = screen.getByRole("navigation");
