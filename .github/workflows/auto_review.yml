@@ -60,6 +60,7 @@ jobs:
         run: |
           echo "Requesting reviews..."
           reviewers="${{ steps.extract_usernames.outputs.usernames }}"
+          reviewers="${reviewers%,}"
           default_reviewers="${{ steps.get_default_reviewers.outputs.default_reviewers }}"
           echo "Reviewers: $reviewers"
           echo "Default reviewers: $default_reviewers"
