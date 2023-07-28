@@ -75,7 +75,9 @@ jobs:
         # if: steps.get_valid_reviewers_usernames.outputs.valid_reviewers == ''
         run: |
           default_reviewers="${{ steps.get_default_reviewers.outputs.default_reviewers }}"
-          echo "Default reviewers: $default_reviewers"
+          creator="${{ steps.get_pull_request_creator_username.outputs.creator }}"
+
+          # the creator of the pull request is not a valid reviewer
           invalid_reviewers=("GitHub" "dependabot[bot]" "$creator" "dependabot-preview[bot]")
 
           # Create an empty array to store valid default reviewers
