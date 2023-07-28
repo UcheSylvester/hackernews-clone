@@ -56,11 +56,11 @@ jobs:
           echo "Requesting reviews..."
           reviewers="${{ steps.extract_usernames.outputs.usernames }}"
           default_reviewers="${{ steps.get_default_reviewers.outputs.default_reviewers }}"
-          
+          reviewer="mbilawisdom"
           echo "Reviewers: $reviewers"
           echo "Default reviewers: $default_reviewers"
           curl -X POST \
             -H "Accept: application/vnd.github.v3+json" \
             -H "Authorization: token $GITHUB_TOKEN" \
-            https://api.github.com/repos/${GITHUB_REPOSITORY}/pulls/${{ github.event.pull_request.number }}/requested_reviewers \
-            -d "{\"reviewers\": ["mbilawisdom"]}"
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/pulls/${{ github.event.pull_request.number }}/requested_reviewers" \
+            -d "{\"reviewers\": [${reviewer}]}"
