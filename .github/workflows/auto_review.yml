@@ -32,7 +32,7 @@ jobs:
         id: get_default_reviewers
         env:
           DEFAULT_REVIEWERS: ${{ vars.DEFAULT_REVIEWERS }}
-        run: echo "::set-output name=default_reviewers::$$DEFAULT_REVIEWERS"
+        run: echo "::set-output name=default_reviewers::$DEFAULT_REVIEWERS"
 
       - name: Request reviews
         env:
