@@ -23,9 +23,9 @@ jobs:
           changed_files="${{ steps.file_changes.outputs.files }}"
           echo "Changed files: $changed_files"
           usernames=($(git log -n 1 --pretty=format:'%an' -- $changed_files))
-          echo "Usernames before: usernames"
+          echo "Usernames before: $usernames"
           usernames=$(echo "${usernames[@]}" | tr ' ' '\n' | sort -u | tr '\n' ',')
-          echo "Usernames after: usernames"
+          echo "Usernames after: $usernames"
           echo "::set-output name=usernames::$usernames"
 
       - name: Request reviews
