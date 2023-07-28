@@ -76,7 +76,7 @@ jobs:
         run: |
           default_reviewers="${{ steps.get_default_reviewers.outputs.default_reviewers }}"
           echo "Default reviewers: $default_reviewers"
-          invalid_reviewers=("GitHub" "dependabot[bot]" "$creator", "dependabot-preview[bot]")
+          invalid_reviewers=("GitHub" "dependabot[bot]" "$creator" "dependabot-preview[bot]")
 
           # Create an empty array to store valid default reviewers
           valid_default_reviewers=()
@@ -85,6 +85,8 @@ jobs:
           IFS=',' read -ra default_reviewers_array <<< "$default_reviewers"
           for default_reviewer in "${default_reviewers_array[@]}"; do
             # Check if the default reviewer is in the valid reviewers array
+            echo "Default reviewer: $default_reviewer"
+            echo "Invalid reviewers: ${invalid_reviewers[@]}"
             if [[ " ${invalid_reviewers[@]} " =~ " $default_reviewer " ]]; then
               valid_default_reviewers+=("$default_reviewer")
             fi
