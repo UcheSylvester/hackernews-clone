@@ -48,6 +48,8 @@ jobs:
           # Loop through the extracted reviewers and check if they are valid
           IFS=',' read -ra reviewers_array <<< "$extracted_reviewers"
           for reviewer in "${reviewers_array[@]}"; do
+            echo "Reviewer: $reviewer"
+            echo "Invalid reviewers: ${invalid_reviewers[@]}"
             # Check if the reviewer is not in the invalid reviewers array
             if [[ ! " ${invalid_reviewers[@]} " =~ " $reviewer " ]]; then
               valid_reviewers+=("$reviewer")
@@ -58,7 +60,6 @@ jobs:
           valid_reviewers_string=$(IFS=','; echo "${valid_reviewers[*]}")
 
           echo "Valid reviewers: $valid_reviewers_string"
-          echo "invalid reviewers: $invalid_reviewers"
 
           # Set the output to be used in the next step
           echo "::set-output name=valid_reviewers::$valid_reviewers_string"
