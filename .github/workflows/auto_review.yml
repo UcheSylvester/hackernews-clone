@@ -14,16 +14,24 @@ jobs:
 
       - name: Get changed files
         id: file_changes
+        run: echo ::set-output name=files::$(git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }})
+
+      - name: Extract usernames
+        id: extract_usernames
         run: |
-          echo "Getting changed files..."
-          echo "::set-output name=files::$(git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }})"
+          echo "Extracting usernames..."
+          changed_files="${{ steps.file_changes.outputs.files }}"
+          echo "Changed files: $changed_files"
+          usernames=($(git log -n 1 --pretty=format:'%an' -- $changed_files))
+          echo "Usernames before: usernames"
+          usernames=$(echo "${usernames[@]}" | tr ' ' '\n' | sort -u | tr '\n' ',')
+          echo "Usernames after: usernames"
+          echo "::set-output name=usernames::$usernames"
 
       - name: Request reviews
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          echo "token --> $GITHUB_TOKEN"
-          echo "url --> https://api.github.com/repos/${GITHUB_REPOSITORY}/pulls/${{ github.event.pull_request.number }}/requested_reviewers"
           curl -X POST \
             -H "Accept: application/vnd.github.v3+json" \
             -H "Authorization: token $GITHUB_TOKEN" \
