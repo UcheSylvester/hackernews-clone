@@ -40,7 +40,7 @@ jobs:
           creator="${{ steps.get_pull_request_creator_username.outputs.creator }}"
 
           # the creator of the pull request is not a valid reviewer
-          invalid_reviewers=("GitHub" "dependabot[bot]" "$creator", "dependabot-preview[bot]")
+          invalid_reviewers=("GitHub" "dependabot[bot]" "$creator" "dependabot-preview[bot]")
 
           # Create an empty array to store valid reviewers
           valid_reviewers=()
