@@ -20,8 +20,8 @@ jobs:
           creator=$(jq -r '.pull_request.user.login' ${{ github.event_path }})
           echo "::set-output name=creator::$creator"  
 
-      - name: Get usernames from commits
-        id: get_usernames_from_commits
+      - name: Extract usernames from commits
+        id: extract_usernames
         run: |
           usernames=($(git log --pretty=format:"%cn" ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} | sort -u))
           usernames=$(echo "${usernames[@]}" | tr ' ' '\n' | sort -u | tr '\n' ',')
@@ -31,12 +31,8 @@ jobs:
       - name: Get default reviewers
         id: get_default_reviewers
         env:
-          GITHUB_DEFAULT_REVIEWERS: ${{ vars.DEFAULT_REVIEWERS }}
-        run: |
-          echo "Getting default reviewers... $GITHUB_DEFAULT_REVIEWERS"
-          default_reviewers=$(echo $GITHUB_DEFAULT_REVIEWERS | tr ' ' '\n' | sort -u | tr '\n' ',')
-          echo "Default reviewers: $default_reviewers"
-          echo "::set-output name=default_reviewers::$default_reviewers"
+          DEFAULT_REVIEWERS: ${{ vars.DEFAULT_REVIEWERS }}
+        run: echo "::set-output name=default_reviewers::$$DEFAULT_REVIEWERS"
 
       - name: Request reviews
         env:
@@ -44,7 +40,9 @@ jobs:
         run: |
           echo "Requesting reviews..."
           reviewers="${{ steps.extract_usernames.outputs.usernames }}"
+          default_reviewers="${{ steps.get_default_reviewers.outputs.default_reviewers }}"
           echo "Reviewers: $reviewers"
+          echo "Default reviewers: $default_reviewers"
           curl -X POST \
             -H "Accept: application/vnd.github.v3+json" \
             -H "Authorization: token $GITHUB_TOKEN" \
