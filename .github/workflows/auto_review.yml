@@ -16,6 +16,8 @@ jobs:
         id: file_changes
         run: |
           echo "Getting changed files..."
+          echo "Base: ${{ github.event.pull_request.base }}"
+          echo "Head: ${{ github.event.pull_request.head }}"
           echo ::set-output name=files::$(git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }})
 
       - name: Extract usernames
