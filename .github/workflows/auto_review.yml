@@ -28,6 +28,8 @@ jobs:
           echo "Extracting usernames..."
           usernames=($(git log --pretty=format:"%cn" ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} | sort -u))
           echo "Usernames: $usernames"
+          usernames=$(echo "${usernames[@]}" | tr ' ' '\n' | sort -u | tr '\n' ',')
+          echo "Usernames after: $usernames"
           echo "::set-output name=usernames::$usernames"
 
       - name: Request reviews
