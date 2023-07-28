@@ -89,7 +89,7 @@ jobs:
             # Check if the default reviewer is in the valid reviewers array
             echo "Default reviewer: $default_reviewer"
             echo "Invalid reviewers: ${invalid_reviewers[@]}"
-            if [[ " ${invalid_reviewers[@]} " =~ " $default_reviewer " ]]; then
+            if [[ ! " ${invalid_reviewers[@]} " =~ " $default_reviewer " ]]; then
               valid_default_reviewers+=("$default_reviewer")
             fi
           done
