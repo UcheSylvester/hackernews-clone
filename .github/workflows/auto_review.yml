@@ -33,6 +33,7 @@ jobs:
         env:
           GITHUB_DEFAULT_REVIEWERS: ${{ secrets.GITHUB_DEFAULT_REVIEWERS }}
         run: |
+          echo "Getting default reviewers... $GITHUB_DEFAULT_REVIEWERS"
           default_reviewers=$(echo $GITHUB_DEFAULT_REVIEWERS | tr ' ' '\n' | sort -u | tr '\n' ',')
           echo "Default reviewers: $default_reviewers"
           echo "::set-output name=default_reviewers::$default_reviewers"
