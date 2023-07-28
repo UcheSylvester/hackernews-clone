@@ -27,7 +27,7 @@ jobs:
           usernames=$(echo "${usernames[@]}" | tr ' ' '\n' | sort -u | tr '\n' ',')
           echo "Usernames : $usernames"
 
-          creator = ${{ steps.get_pull_request_creator_username.outputs.creator }}
+          creator=${{ steps.get_pull_request_creator_username.outputs.creator }}
           usernames="${usernames//$creator,}"
           echo "Usernames after : $usernames"
 
