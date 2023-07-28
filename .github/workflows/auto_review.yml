@@ -30,8 +30,10 @@ jobs:
 
       - name: Get default reviewers
         id: get_default_reviewers
+        env:
+          GITHUB_DEFAULT_REVIEWERS: ${{ secrets.GITHUB_DEFAULT_REVIEWERS }}
         run: |
-          default_reviewers=${{ secret.DEFAULT_REVIEWERS }}
+          default_reviewers=$(echo $GITHUB_DEFAULT_REVIEWERS | tr ' ' '\n' | sort -u | tr '\n' ',')
           echo "Default reviewers: $default_reviewers"
           echo "::set-output name=default_reviewers::$default_reviewers"
 
