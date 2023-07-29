@@ -70,7 +70,6 @@ jobs:
 
       - name: Get valid default reviewers
         id: get_valid_default_reviewers
-        if: steps.get_valid_extracted_reviewers.outputs.valid_reviewers == ''
         run: |
           default_reviewers="${{ steps.get_default_reviewers.outputs.default_reviewers }}"
           creator="${{ steps.get_pull_request_creator_username.outputs.creator }}"
