@@ -20,8 +20,8 @@ jobs:
           creator=$(jq -r '.pull_request.user.login' ${{ github.event_path }})
           echo "::set-output name=creator::$creator"  
 
-      - name: Extract usernames from commits
-        id: extract_usernames
+      - name: Extract possible reviewers from commits
+        id: extract_reviewers
         run: |
           usernames=($(git log --pretty=format:"%cn" ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} | sort -u))
           usernames=$(echo "${usernames[@]}" | tr ' ' '\n' | sort -u | tr '\n' ',')
@@ -36,7 +36,7 @@ jobs:
       - name: Get valid extracted reviewers
         id: get_valid_extracted_reviewers
         run: |
-          extracted_reviewers="${{ steps.extract_usernames.outputs.usernames }}"
+          extracted_reviewers="${{ steps.extract_reviewers.outputs.usernames }}"
           creator="${{ steps.get_pull_request_creator_username.outputs.creator }}"
 
           # the creator of the pull request is not a valid reviewer
@@ -53,8 +53,6 @@ jobs:
               valid_reviewers+=("$reviewer")
             fi
           done
-
-          valid_reviewers=("mbilawisdom")
 
           # Join the valid reviewers array back into a comma-separated string
           valid_reviewers_string=$(IFS=','; echo "${valid_reviewers[*]}")
@@ -122,8 +120,6 @@ jobs:
           # Get the first two reviewers from the shuffled array
           random_reviewers=("${shuffled_reviewers[@]:0:2}")
 
-          echo "Reviewers: $reviewers"
-
           random_reviewers_string=$(IFS=','; echo "${random_reviewers[*]}")
 
           # Get the first reviewer
@@ -135,7 +131,6 @@ jobs:
             second_reviewer="${random_reviewers[1]}"
           fi
 
-          echo "Random reviewers string: $random_reviewers_string"
           echo "First reviewer: $first_reviewer"
           echo "Second reviewer: $second_reviewer"
 
