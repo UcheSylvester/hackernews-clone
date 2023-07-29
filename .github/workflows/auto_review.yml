@@ -23,6 +23,8 @@ jobs:
       - name: Extract possible reviewers from commits
         id: extract_reviewers
         run: |
+          echo "Base SHA: ${{ github.event.pull_request.base.sha }}"
+          echo "Head SHA: ${{ github.event.pull_request.head.sha }}"
           usernames=($(git log --pretty=format:"%cn" ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} | sort -u))
           usernames=$(echo "${usernames[@]}" | tr ' ' '\n' | sort -u | tr '\n' ',')
 
