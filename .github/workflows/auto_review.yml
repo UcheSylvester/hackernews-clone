@@ -132,6 +132,7 @@ jobs:
             second_reviewer="${random_reviewers[1]}"
           fi
 
+          echo "Reviewers: $random_reviewers_string"
           echo "First reviewer: $first_reviewer"
           echo "Second reviewer: $second_reviewer"
 
