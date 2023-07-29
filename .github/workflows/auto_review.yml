@@ -45,11 +45,12 @@ jobs:
           IFS=',' read -ra emails_array <<< "$emails"
           for email in "${emails_array}"; do
             echo "email : $email"
+            echo "url "https://api.github.com/search/users?q=$email+in:email""
             # Get the GitHub username from the email
             username=$(curl -s -X GET \
             -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
             "https://api.github.com/search/users?q=$email+in:email" \
-            | jq -r '.[0].login')
+            | jq -r '.items[0].login')
             echo "gusername : $username"
           done
 
