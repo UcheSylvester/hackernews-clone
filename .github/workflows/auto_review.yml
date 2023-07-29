@@ -18,67 +18,65 @@ jobs:
         id: get_pull_request_creator_username
         run: |
           creator=$(jq -r '.pull_request.user.login' ${{ github.event_path }})
-          echo "::set-output name=creator::$creator"  
-
-      - name: Extract usernames from commits
-        id: extract_usernames
+          echo "creator: $creator"
+          echo "::set-output name=creator::$creator"
+          
+      - name: Extract reviewers emails from commits
+        id: extract_reviewers_emails
         run: |
-          usernames=($(git log --pretty=format:"%cn" ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} | sort -u))
-          usernames=$(echo "${usernames[@]}" | tr ' ' '\n' | sort -u | tr '\n' ',')
+          emails=($(git log --pretty=format:"%ae" ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }} | sort -u))
 
-          # Remove any leading or trailing commas
-          usernames="${usernames#,}"
-          usernames="${usernames%,}"
+          # Join the emails array back into a comma-separated string
+          emails=$(IFS=','; echo "${emails[*]}")
 
-          echo "Usernames : $usernames"
-          echo "::set-output name=usernames::$usernames"
+          echo "emails: $emails"
+          echo "::set-output name=emails::$emails"
 
-      - name: Get valid extracted reviewers
-        id: get_valid_extracted_reviewers
+      - name: Get valid reviewers usernames
+        id: get_valid_reviewers
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          extracted_reviewers="${{ steps.extract_usernames.outputs.usernames }}"
-          creator="${{ steps.get_pull_request_creator_username.outputs.creator }}"
+          emails="${{ steps.extract_reviewers_emails.outputs.emails }}"
 
-          # the creator of the pull request is not a valid reviewer
-          invalid_reviewers=("GitHub" "dependabot[bot]" "$creator" "dependabot-preview[bot]")
-
-          # Create an empty array to store valid reviewers
+          # Create an empty array to store reviewers GitHub usernames
           valid_reviewers=()
 
-          # Loop through the extracted reviewers and check if they are valid
-          IFS=',' read -ra reviewers_array <<< "$extracted_reviewers"
-          for reviewer in "${reviewers_array[@]}"; do
-            # Check if the reviewer is not in the invalid reviewers array
-            if [[ ! " ${invalid_reviewers[@]} " =~ " $reviewer " ]]; then
-              valid_reviewers+=("$reviewer")
+          # the creator of the pull request is not a valid reviewer
+          # TODO: in the future, we might want to consider users that are no longer part of the organization or collaborators
+          creator="${{ steps.get_pull_request_creator_username.outputs.creator }}"
+          invalid_reviewers=("GitHub" "dependabot[bot]" "$creator" "dependabot-preview[bot]" null)
+
+          # Loop through the reviewers emails and get their GitHub usernames
+          IFS=',' read -ra emails_array <<< "$emails"
+          for email in "${emails_array}"; do
+            # Get the GitHub username from the email
+            username=$(curl -s -X GET \
+            -H "Authorization: token $GITHUB_TOKEN" \
+            "https://api.github.com/search/users?q=$email+in:email" \
+            | jq -r '.items[0].login')
+            echo "username: $username, email: $email"
+            if [[ ! " ${invalid_reviewers[@]} " =~ " $username " ]]; then
+              valid_reviewers+=("$username")
             fi
           done
 
-          valid_reviewers=("mbilawisdom")
-
-          # Join the valid reviewers array back into a comma-separated string
+          # Join the reviewers usernames array back into a comma-separated string
           valid_reviewers_string=$(IFS=','; echo "${valid_reviewers[*]}")
 
           echo "Valid reviewers: $valid_reviewers_string"
-
-          # Set the output to be used in the next step
           echo "::set-output name=valid_reviewers::$valid_reviewers_string"
-
-      - name: Get default reviewers
-        id: get_default_reviewers
-        env:
-          DEFAULT_REVIEWERS: ${{ vars.DEFAULT_REVIEWERS }}
-        run: echo "::set-output name=default_reviewers::$DEFAULT_REVIEWERS"
 
       - name: Get valid default reviewers
         id: get_valid_default_reviewers
-        if: steps.get_valid_extracted_reviewers.outputs.valid_reviewers == ''
+        env:
+          DEFAULT_REVIEWERS: ${{ vars.DEFAULT_REVIEWERS }}
         run: |
-          default_reviewers="${{ steps.get_default_reviewers.outputs.default_reviewers }}"
-          creator="${{ steps.get_pull_request_creator_username.outputs.creator }}"
-
+          default_reviewers="$DEFAULT_REVIEWERS"
+          
           # the creator of the pull request is not a valid reviewer
-          invalid_reviewers=("GitHub" "dependabot[bot]" "$creator" "dependabot-preview[bot]")
+          creator="${{ steps.get_pull_request_creator_username.outputs.creator }}"
+          invalid_reviewers=("GitHub" "dependabot[bot]" "$creator" "dependabot-preview[bot]", null)
 
           # Create an empty array to store valid default reviewers
           valid_default_reviewers=()
@@ -104,7 +102,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          extracted_reviewers="${{ steps.get_valid_extracted_reviewers.outputs.valid_reviewers }}"
+          extracted_reviewers="${{ steps.get_valid_reviewers.outputs.valid_reviewers }}"
           default_reviewers="${{ steps.get_valid_default_reviewers.outputs.valid_default_reviewers }}"  
 
           # If there are no extracted reviewers, use the default reviewers
@@ -122,20 +120,24 @@ jobs:
           # Get the first two reviewers from the shuffled array
           random_reviewers=("${shuffled_reviewers[@]:0:2}")
 
-          echo "Reviewers: $reviewers"
-
           random_reviewers_string=$(IFS=','; echo "${random_reviewers[*]}")
 
           # Get the first reviewer
           first_reviewer="${random_reviewers[0]}"
           # Get the second reviewer
           if [[ ${#random_reviewers[@]} -eq 1 ]]; then
-            second_reviewer=""
+            # if there is only one reviewer, set the second reviewer to any default reviewer that is not the first reviewer
+            IFS=',' read -ra default_reviewers_array <<< "$default_reviewers"
+            for default_reviewer in "${default_reviewers_array[@]}"; do
+              if [[ $default_reviewer != $first_reviewer ]]; then
+                second_reviewer=$default_reviewer
+              fi
+            done
           else
             second_reviewer="${random_reviewers[1]}"
           fi
 
-          echo "Random reviewers string: $random_reviewers_string"
+          echo "Reviewers: $random_reviewers_string"
           echo "First reviewer: $first_reviewer"
           echo "Second reviewer: $second_reviewer"
 
