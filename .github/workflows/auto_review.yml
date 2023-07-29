@@ -20,11 +20,22 @@ jobs:
           creator=$(jq -r '.pull_request.user.login' ${{ github.event_path }})
           echo "creator: $creator"
           echo "::set-output name=creator::$creator"
+
+      - name: Get changed files
+        id: get_changed_files
+        run: |
+          base_sha=${{ github.event.pull_request.base.sha }}
+          head_sha=${{ github.event.pull_request.head.sha }}
+          echo ::set-output name=changed_files::$(git diff --name-only $base_sha $head_sha)
           
-      - name: Extract reviewers emails from commits
+      - name: Extract reviewers emails from changed files
         id: extract_reviewers_emails
         run: |
-          emails=($(git log --pretty=format:"%ae" ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }} | sort -u))
+          # Get the changed files
+          changed_files="${{ steps.get_changed_files.outputs.changed_files }}"
+          echo "changed_files: $changed_files"
+          
+          emails=($(git log --pretty=format:"%ae" -- $changed_files | sort -u))
 
           # Join the emails array back into a comma-separated string
           emails=$(IFS=','; echo "${emails[*]}")
