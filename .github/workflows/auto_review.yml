@@ -48,8 +48,7 @@ jobs:
             # Get the GitHub username from the email
             username=$(curl -s -X GET \
             -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-            "https://api.github.com/users?q=$emailin:email" \
-            | jq -r '.items[0].login')
+            "https://api.github.com/users?q=okorocode@gmail.com")
             echo "gusername : $username"
           done
 
