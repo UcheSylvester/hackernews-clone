@@ -42,6 +42,7 @@ jobs:
           valid_reviewers=()
 
           # the creator of the pull request is not a valid reviewer
+          # TODO: in the future, we might want to consider users that are no longer part of the organization or collaborators
           invalid_reviewers=("GitHub" "dependabot[bot]" "$creator" "dependabot-preview[bot]" null)
 
           # Loop through the reviewers emails and get their GitHub usernames
@@ -123,7 +124,13 @@ jobs:
           first_reviewer="${random_reviewers[0]}"
           # Get the second reviewer
           if [[ ${#random_reviewers[@]} -eq 1 ]]; then
-            second_reviewer=""
+            # if there is only one reviewer, set the second reviewer to any default reviewer that is not the first reviewer
+            IFS=',' read -ra default_reviewers_array <<< "$default_reviewers"
+            for default_reviewer in "${default_reviewers_array[@]}"; do
+              if [[ $default_reviewer != $first_reviewer ]]; then
+                second_reviewer=$default_reviewer
+              fi
+            done
           else
             second_reviewer="${random_reviewers[1]}"
           fi
