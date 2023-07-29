@@ -18,6 +18,7 @@ jobs:
         id: get_pull_request_creator_username
         run: |
           creator=$(jq -r '.pull_request.user.login' ${{ github.event_path }})
+          echo "creator: $creator"
           echo "::set-output name=creator::$creator"
           
       - name: Extract reviewers emails from commits
@@ -28,7 +29,7 @@ jobs:
           # Join the emails array back into a comma-separated string
           emails=$(IFS=','; echo "${emails[*]}")
 
-          echo "emails after : $emails"
+          echo "emails: $emails"
           echo "::set-output name=emails::$emails"
 
       - name: Get valid reviewers usernames
@@ -43,6 +44,7 @@ jobs:
 
           # the creator of the pull request is not a valid reviewer
           # TODO: in the future, we might want to consider users that are no longer part of the organization or collaborators
+          creator="${{ steps.get_pull_request_creator_username.outputs.creator }}"
           invalid_reviewers=("GitHub" "dependabot[bot]" "$creator" "dependabot-preview[bot]" null)
 
           # Loop through the reviewers emails and get their GitHub usernames
@@ -71,9 +73,9 @@ jobs:
           DEFAULT_REVIEWERS: ${{ vars.DEFAULT_REVIEWERS }}
         run: |
           default_reviewers="$DEFAULT_REVIEWERS"
-          creator="${{ steps.get_pull_request_creator_username.outputs.creator }}"
-
+          
           # the creator of the pull request is not a valid reviewer
+          creator="${{ steps.get_pull_request_creator_username.outputs.creator }}"
           invalid_reviewers=("GitHub" "dependabot[bot]" "$creator" "dependabot-preview[bot]", null)
 
           # Create an empty array to store valid default reviewers
