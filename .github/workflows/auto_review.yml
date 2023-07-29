@@ -38,19 +38,20 @@ jobs:
         run: |
           emails="${{ steps.extract_reviewers_emails.outputs.emails }}"
 
-          # Get GitHub usernames using GitHub API
-          usernames=$(curl -X GET \
-            -H "Authorization: token $GITHUB_TOKEN" \
-            "https://api.github.com/user/emails" \
-            | jq -r --arg emails "$emails" '.[] | select(.email as $e | ($emails | split(",") | map(select($e == $emails | split(",") | map(select(. == $e))) | length > 0) | length > 0)).login' | tr '\n' ',')
+          # Create an empty array to store reviewers GitHub usernames
+          reviewers_usernames=()
 
-          # Remove any leading or trailing commas
-          usernames="${usernames#,}"
-          usernames="${usernames%,}"
+          # Loop through the reviewers emails and get their GitHub usernames
+          IFS=',' read -ra emails_array <<< "$emails"
+          for email in "${emails_array}"; do
+            # Get the GitHub username from the email
+            username=$(curl -s -X GET \
+            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            "https://api.github.com/users?q=$emailin:email")
+            echo "gusername : $username"
+          done
 
-          echo "GitHub Usernames : $usernames"
 
-          echo "::set-output name=usernames::$usernames"
 
       - name: Extract possible reviewers from commits
         id: extract_reviewers
