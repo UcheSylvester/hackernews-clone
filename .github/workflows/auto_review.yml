@@ -18,7 +18,39 @@ jobs:
         id: get_pull_request_creator_username
         run: |
           creator=$(jq -r '.pull_request.user.login' ${{ github.event_path }})
-          echo "::set-output name=creator::$creator"  
+          echo "::set-output name=creator::$creator"
+          
+      - name: Extract reviewers emails from commits
+        id: extract_reviewers_emails
+        run: |
+          emails=($(git log --pretty=format:"%ae" e246ac967be580511c87bf3f22d8a36fbd8905b2..5ecca7b1a6383e8d290b1f71aa39a5ab5922e3af | sort -u))
+
+          # Join the emails array back into a comma-separated string
+          emails=$(IFS=','; echo "${emails[*]}")
+
+          echo "emails after : $emails"
+          echo "::set-output name=emails::$emails"
+
+      - name: Get reviewers GitHub usernames
+        id: get_reviewers_usernames
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          emails="${{ steps.extract_reviewers_emails.outputs.emails }}"
+
+          # Get GitHub usernames using GitHub API
+          usernames=$(curl -X GET \
+            -H "Authorization: token $GITHUB_TOKEN" \
+            "https://api.github.com/user/emails" \
+            | jq -r --arg emails "$emails" '.[] | select(.email as $e | ($emails | split(",") | map(select($e == $emails | split(",") | map(select(. == $e))) | length > 0) | length > 0)).login' | tr '\n' ',')
+
+          # Remove any leading or trailing commas
+          usernames="${usernames#,}"
+          usernames="${usernames%,}"
+
+          echo "GitHub Usernames : $usernames"
+
+          echo "::set-output name=usernames::$usernames"
 
       - name: Extract possible reviewers from commits
         id: extract_reviewers
