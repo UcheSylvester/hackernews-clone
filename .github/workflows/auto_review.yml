@@ -23,23 +23,21 @@ jobs:
 
       - name: Get changed files
         id: get_changed_files
-        run: echo ::set-output name=changed_files::$(git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }})
+        run: |
+          base_sha=${{ github.event.pull_request.base.sha }}}
+          head_sha=${{ github.event.pull_request.head.sha }}}
+          echo "base_sha: $base_sha"
+          echo "head_sha: $head_sha"
+          echo ::set-output name=changed_files::$(git diff --name-only $base_sha $head_sha)
           
-      - name: Extract reviewers emails from commits
+      - name: Extract reviewers emails from changed files
         id: extract_reviewers_emails
         run: |
           # Get the changed files
           changed_files="${{ steps.get_changed_files.outputs.changed_files }}"
           echo "changed_files: $changed_files"
-          emails=()
-
-          # # Loop through the changed files and get the emails of the reviewers
-          # for file in $changed_files; do
-          #   # Get the emails of the reviewers from the commit messages
-          #   emails+=($(git log --pretty=format:"%ae" ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }} -- $file | sort -u))
-          # done
-
-          emails=($(git log --pretty=format:"%ae" ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }} | sort -u))
+          
+          emails=($(git log --pretty=format:"%ae" -- $changed_files | sort -u))
 
           # Join the emails array back into a comma-separated string
           emails=$(IFS=','; echo "${emails[*]}")
