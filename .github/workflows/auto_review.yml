@@ -23,7 +23,7 @@ jobs:
       - name: Extract reviewers emails from commits
         id: extract_reviewers_emails
         run: |
-          emails=($(git log --pretty=format:"%ae" e246ac967be580511c87bf3f22d8a36fbd8905b2..5ecca7b1a6383e8d290b1f71aa39a5ab5922e3af | sort -u))
+          emails=($(git log --pretty=format:"%ae" ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }} | sort -u))
 
           # Join the emails array back into a comma-separated string
           emails=$(IFS=','; echo "${emails[*]}")
